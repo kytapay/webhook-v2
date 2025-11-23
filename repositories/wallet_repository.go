@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"github.com/kytapay/webhook-v2/models"
 )
 
 type WalletRepository struct {

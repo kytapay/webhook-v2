@@ -70,7 +70,7 @@ func verifySymmetricSignature(stringToSign, signature, secret string) bool {
 }
 
 // verifyRSASignature verifies RSA signature using SHA-256
-func verifyRSASignature(stringToSign, signature, publicKey *rsa.PublicKey) bool {
+func verifyRSASignature(stringToSign string, signature string, publicKey *rsa.PublicKey) bool {
 	// Decode base64 signature
 	signatureBytes, err := base64.StdEncoding.DecodeString(signature)
 	if err != nil {
