@@ -981,9 +981,6 @@ func (wc *WebhookController) processPayoutTransaction(paymentID, status string, 
 		return
 	}
 
-	// Get express fee for non-role-3 users
-	feeExpress, _ := wc.feesRepo.GetFeesExpress(10)
-
 	// Calculate total fee based on role_id
 	var finalTotalFee float64
 	if user.RoleID != nil && *user.RoleID == 3 {
