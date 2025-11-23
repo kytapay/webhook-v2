@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kytapay/webhook-v2/helpers"
@@ -303,7 +302,7 @@ func (wc *WebhookController) HandlePakaiLinkVA(c *gin.Context) {
 }
 
 // processTransaction processes the transaction update
-func (wc *WebhookController) processTransaction(paymentID, status, amount, date, source, provider string) {
+func (wc *WebhookController) processTransaction(paymentID, status string, amount float64, date, source, provider string) {
 	// Get transaction
 	transaction, err := wc.transactionRepo.GetTransactionByGrantID(paymentID)
 	if err != nil {
@@ -364,7 +363,7 @@ func (wc *WebhookController) processTransaction(paymentID, status, amount, date,
 	}
 
 	feeReguler, _ := wc.feesRepo.GetFeesLimit(10, *merchantPayment.PaymentMethodID)
-	feeExpress, _ := wc.feesRepo.GetFeesExpress(10)
+	// feeExpress, _ := wc.feesRepo.GetFeesExpress(10) // Not used in payment processing
 
 	// Determine user_id
 	var userID int
@@ -439,12 +438,13 @@ func (wc *WebhookController) processTransaction(paymentID, status, amount, date,
 	if transactions == nil {
 		currencyID := 1
 		transactionTypeID := 10
+		orderID := transaction.OrderID
 		transactionsData := models.TransactionsData{
 			UserID:                &userID,
 			CurrencyID:            &currencyID,
 			PaymentMethodID:       merchantPayment.PaymentMethodID,
 			MerchantID:            merchantPayment.MerchantID,
-			UUID:                  transaction.OrderID,
+			UUID:                  &orderID,
 			GrantID:               &paymentID,
 			TransactionReferenceID: 1,
 			TransactionTypeID:     &transactionTypeID,
@@ -515,7 +515,7 @@ func getPaymentMethodName(source string) string {
 
 // sendCallbackToMerchant sends callback to merchant
 func (wc *WebhookController) sendCallbackToMerchant(transaction *models.TransactionInfo, payload interface{}) {
-	callbackStatus, err := wc.callbackRepo.GetCallbackByTransactionInfoID(transaction.ID)
+	_, err := wc.callbackRepo.GetCallbackByTransactionInfoID(transaction.ID)
 	if err != nil {
 		return
 	}
@@ -887,7 +887,7 @@ func (wc *WebhookController) HandlePakaiLinkPayoutEWallet(c *gin.Context) {
 }
 
 // processPayoutTransaction processes the payout transaction update
-func (wc *WebhookController) processPayoutTransaction(paymentID, status, amount, date, paymentMethod, provider string) {
+func (wc *WebhookController) processPayoutTransaction(paymentID, status string, amount float64, date, paymentMethod, provider string) {
 	// Get transaction
 	transaction, err := wc.transactionRepo.GetTransactionByGrantID(paymentID)
 	if err != nil {
@@ -973,7 +973,6 @@ func (wc *WebhookController) processPayoutTransaction(paymentID, status, amount,
 	}
 
 	chargePercentageAmount := (amount * chargePercentage) / 100
-	totalFee := chargePercentageAmount + chargeFixed
 
 	// Get user to check role_id
 	user, err := wc.userRepo.GetUserByID(userID)
@@ -981,6 +980,9 @@ func (wc *WebhookController) processPayoutTransaction(paymentID, status, amount,
 		wc.sendTelegramAlert(fmt.Sprintf("❌ <b>Error Getting User</b>\n\n• Source: %s Payout %s\n• Payment ID: <code>%s</code>\n• Error: <code>%s</code>", paymentMethod, provider, paymentID, err.Error()), "HTML")
 		return
 	}
+
+	// Get express fee for non-role-3 users
+	feeExpress, _ := wc.feesRepo.GetFeesExpress(10)
 
 	// Calculate total fee based on role_id
 	var finalTotalFee float64
