@@ -1,0 +1,22 @@
+[Unit]
+Description=KytaPay Webhook v2 Service
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=kytapay
+Group=kytapay
+WorkingDirectory=/opt/kytapay/webhook-v2
+ExecStart=/opt/kytapay/webhook-v2/webhook-v2
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=kytapay-webhook
+
+# Environment variables (optional, bisa juga pakai .env file)
+Environment="GIN_MODE=release"
+
+[Install]
+WantedBy=multi-user.target
+
