@@ -51,20 +51,29 @@ func (wc *WebhookController) HandleLinkQuQRIS(c *gin.Context) {
 
 	if !helpers.VerifyLinkQuSignature(clientID, clientSecret) {
 		wc.sendTelegramAlert("🚨 <b>Unauthorized Callback Attempt</b>\n\n⚠️ <b>Security Alert:</b>\n• Source: QRIS LinkQu\n• IP Address: <code>" + c.ClientIP() + "</code>\n• Client ID: <code>" + clientID + "</code>", "HTML")
-		c.JSON(http.StatusOK, gin.H{"status": "success"}) // Always return 200 OK
+		c.JSON(http.StatusOK, gin.H{
+			"responseCode":    "2002800",
+			"responseMessage": "Successful",
+		})
 		return
 	}
 
 	// Read request body
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"status": "success"})
+		c.JSON(http.StatusOK, gin.H{
+			"responseCode":    "2002800",
+			"responseMessage": "Successful",
+		})
 		return
 	}
 
 	var data map[string]interface{}
 	if err := json.Unmarshal(body, &data); err != nil {
-		c.JSON(http.StatusOK, gin.H{"status": "success"})
+		c.JSON(http.StatusOK, gin.H{
+			"responseCode":    "2002800",
+			"responseMessage": "Successful",
+		})
 		return
 	}
 
@@ -77,7 +86,10 @@ func (wc *WebhookController) HandleLinkQuQRIS(c *gin.Context) {
 
 	if partnerRef == "" {
 		wc.sendTelegramAlert("⚠️ <b>Callback Error</b>\n\n• Source: QRIS LinkQu\n• Issue: Missing payment ID", "HTML")
-		c.JSON(http.StatusOK, gin.H{"status": "success"})
+		c.JSON(http.StatusOK, gin.H{
+			"responseCode":    "2002800",
+			"responseMessage": "Successful",
+		})
 		return
 	}
 
@@ -110,20 +122,29 @@ func (wc *WebhookController) HandleLinkQuEWallet(c *gin.Context) {
 
 	if !helpers.VerifyLinkQuSignature(clientID, clientSecret) {
 		wc.sendTelegramAlert("🚨 <b>Unauthorized Callback Attempt</b>\n\n⚠️ <b>Security Alert:</b>\n• Source: E-Wallet LinkQu\n• IP Address: <code>" + c.ClientIP() + "</code>\n• Client ID: <code>" + clientID + "</code>", "HTML")
-		c.JSON(http.StatusOK, gin.H{"status": "success"})
+		c.JSON(http.StatusOK, gin.H{
+			"responseCode":    "2002800",
+			"responseMessage": "Successful",
+		})
 		return
 	}
 
 	// Read request body
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"status": "success"})
+		c.JSON(http.StatusOK, gin.H{
+			"responseCode":    "2002800",
+			"responseMessage": "Successful",
+		})
 		return
 	}
 
 	var data map[string]interface{}
 	if err := json.Unmarshal(body, &data); err != nil {
-		c.JSON(http.StatusOK, gin.H{"status": "success"})
+		c.JSON(http.StatusOK, gin.H{
+			"responseCode":    "2002800",
+			"responseMessage": "Successful",
+		})
 		return
 	}
 
@@ -136,7 +157,10 @@ func (wc *WebhookController) HandleLinkQuEWallet(c *gin.Context) {
 
 	if partnerRef == "" {
 		wc.sendTelegramAlert("⚠️ <b>Callback Error</b>\n\n• Source: E-Wallet LinkQu\n• Issue: Missing payment ID", "HTML")
-		c.JSON(http.StatusOK, gin.H{"status": "success"})
+		c.JSON(http.StatusOK, gin.H{
+			"responseCode":    "2002800",
+			"responseMessage": "Successful",
+		})
 		return
 	}
 
