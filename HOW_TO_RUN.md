@@ -135,13 +135,16 @@ Ikuti panduan di `DATABASE_SETUP.md` untuk mendapatkan:
 
 ```bash
 # Buat direktori untuk aplikasi
-sudo mkdir -p /opt/kytapay-webhook
-sudo chown $USER:$USER /opt/kytapay-webhook
-cd /opt/kytapay-webhook
+sudo mkdir -p /opt
+sudo chown $USER:$USER /opt
+cd /opt
 
-# Clone repository Webhook (ganti dengan URL repo Anda)
-git clone https://github.com/yourusername/kytapay-webhook-v2.git .
-# atau jika sudah ada, pull terbaru
+# Clone repository Webhook
+git clone https://github.com/kytapay/webhook-v2.git
+cd webhook-v2
+
+# Atau jika sudah ada, pull terbaru
+cd /opt/webhook-v2
 git pull origin main
 ```
 
@@ -162,18 +165,20 @@ docker compose version
 ### 1. Setup Environment Variables
 
 ```bash
-cd /opt/kytapay-webhook
+cd /opt/webhook-v2
 cp env.example .env
 nano .env
 ```
 
 Isi dengan konfigurasi yang sesuai (lihat `env.example` untuk referensi).
 
+**PENTING**: Pastikan file `.env` ada di direktori `/opt/webhook-v2` sebelum menjalankan Docker Compose. Docker akan mount file ini ke dalam container.
+
 ### 2. Setup RSA Keys (jika diperlukan)
 
 ```bash
 # PakaiLink RSA Public Key (untuk Webhook)
-cd /opt/kytapay-webhook
+cd /opt/webhook-v2
 # Upload file pakailink_rsa_public_key.pem ke direktori ini
 # Pastikan permission-nya aman
 chmod 644 pakailink_rsa_public_key.pem
@@ -186,7 +191,21 @@ chmod 644 pakailink_rsa_public_key.pem
 ### 1. Build Docker Image
 
 ```bash
-cd /opt/kytapay-webhook
+cd /opt/webhook-v2
+
+# Pastikan .env file ada
+if [ ! -f .env ]; then
+    echo "ERROR: .env file tidak ditemukan!"
+    echo "Copy env.example ke .env dan isi dengan konfigurasi yang sesuai"
+    exit 1
+fi
+
+# Pastikan go.sum ada dan lengkap sebelum build
+if [ ! -f go.sum ] || [ ! -s go.sum ]; then
+    echo "go.sum tidak ditemukan atau kosong, menjalankan go mod tidy..."
+    go mod tidy
+    go mod verify
+fi
 
 # Build image untuk Webhook
 docker compose build
@@ -198,7 +217,7 @@ docker compose build --no-cache
 ### 2. Run dengan Docker Compose
 
 ```bash
-cd /opt/kytapay-webhook
+cd /opt/webhook-v2
 
 # Start service
 docker compose up -d
@@ -399,7 +418,7 @@ Nginx config akan otomatis di-update oleh Certbot. File akan ada di:
 ### 1. View Application Logs
 
 ```bash
-cd /opt/kytapay-webhook
+cd /opt/webhook-v2
 
 # View all logs
 docker compose logs -f
@@ -423,7 +442,7 @@ sudo tail -f /var/log/nginx/kytapay-webhook-error.log
 ### 3. Check Service Status
 
 ```bash
-cd /opt/kytapay-webhook
+cd /opt/webhook-v2
 
 # Check Docker containers status
 docker compose ps
@@ -460,7 +479,7 @@ curl http://localhost:8081/health
 ### 1. Container Tidak Start
 
 ```bash
-cd /opt/kytapay-webhook
+cd /opt/webhook-v2
 
 # Check container logs
 docker compose logs webhook-v2
@@ -475,7 +494,7 @@ docker ps -a | grep kytapay-webhook
 docker inspect kytapay-webhook-v2 | grep ExitCode
 
 # Check .env file
-cat /opt/kytapay-webhook/.env
+cat /opt/webhook-v2/.env
 
 # Try to start container manually
 docker compose up webhook-v2
@@ -533,13 +552,13 @@ sudo nginx -t
 
 ```bash
 # Fix ownership untuk .env file
-sudo chown $USER:$USER /opt/kytapay-webhook/.env
+sudo chown $USER:$USER /opt/webhook-v2/.env
 
 # Fix permissions untuk .env file
-sudo chmod 600 /opt/kytapay-webhook/.env
+sudo chmod 600 /opt/webhook-v2/.env
 
 # Fix permissions untuk RSA key
-sudo chmod 644 /opt/kytapay-webhook/pakailink_rsa_public_key.pem
+sudo chmod 644 /opt/webhook-v2/pakailink_rsa_public_key.pem
 
 # Check Docker permissions
 sudo usermod -aG docker $USER
@@ -575,14 +594,14 @@ docker stats
 ### 1. Pull Latest Code
 
 ```bash
-cd /opt/kytapay-webhook
+cd /opt/webhook-v2
 git pull origin main
 ```
 
 ### 2. Rebuild Docker Image
 
 ```bash
-cd /opt/kytapay-webhook
+cd /opt/webhook-v2
 
 # Rebuild image
 docker compose build
@@ -594,7 +613,7 @@ docker compose build --no-cache
 ### 3. Restart Service
 
 ```bash
-cd /opt/kytapay-webhook
+cd /opt/webhook-v2
 
 # Restart dengan rebuild
 docker compose up -d --build
@@ -610,7 +629,7 @@ docker compose restart webhook-v2
 
 ```bash
 # Pull latest code
-cd /opt/kytapay-webhook
+cd /opt/webhook-v2
 git pull origin main
 
 # Rebuild image
