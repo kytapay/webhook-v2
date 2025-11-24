@@ -115,12 +115,13 @@ func NormalizeStatus(status string) string {
 }
 
 // MerchantNormalizeStatus converts status to merchant format
+// Returns: "Success", "Pending", or "Failed" (always with capital first letter)
 func MerchantNormalizeStatus(status string) string {
 	successStatuses := []string{"SUCCEEDED", "PAID", "CAPTURED", "SUCCESS", "COMPLETED", "00"}
 	expiredStatuses := []string{"EXPIRED", "CANCELLED", "VOIDED", "FAILED"}
 	pendingStatuses := []string{"PENDING", "IN_PROGRESS", "OPEN"}
 
-	statusUpper := strings.ToUpper(status)
+	statusUpper := strings.ToUpper(strings.TrimSpace(status))
 
 	for _, s := range successStatuses {
 		if statusUpper == s {
@@ -130,7 +131,7 @@ func MerchantNormalizeStatus(status string) string {
 
 	for _, e := range expiredStatuses {
 		if statusUpper == e {
-			return "Blocked"
+			return "Failed"
 		}
 	}
 
@@ -140,6 +141,18 @@ func MerchantNormalizeStatus(status string) string {
 		}
 	}
 
-	return "Success" // Default
+	// If status is lowercase or mixed case, normalize it
+	statusLower := strings.ToLower(status)
+	if statusLower == "success" || statusLower == "succeeded" || statusLower == "paid" || statusLower == "completed" {
+		return "Success"
+	}
+	if statusLower == "pending" || statusLower == "in_progress" || statusLower == "open" {
+		return "Pending"
+	}
+	if statusLower == "failed" || statusLower == "expired" || statusLower == "cancelled" || statusLower == "voided" || statusLower == "blocked" {
+		return "Failed"
+	}
+
+	return "Pending" // Default to Pending for unknown statuses
 }
 
