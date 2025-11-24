@@ -441,7 +441,8 @@ func (wc *WebhookController) processTransaction(paymentID, status string, amount
 
 	// Send callback to merchant (only for payment callbacks, not settlement)
 	if transactions == nil {
-		payloads := services.BuildPayloadV2(transaction, paymentID, merchant.BusinessName, normalizedStatus, date)
+		// Use merchantNormalizedStatus (Success/Pending/Failed) instead of normalizedStatus (success/pending/expires)
+		payloads := services.BuildPayloadV2(transaction, paymentID, merchant.BusinessName, merchantNormalizedStatus, date)
 		payload := payloads[transaction.PaymentMethod]
 		wc.sendCallbackToMerchant(transaction, payload)
 	}
