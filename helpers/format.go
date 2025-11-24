@@ -50,12 +50,7 @@ func FormatNumber(num interface{}, decimals int) string {
 	}
 	integerPart = reverseString(formattedReversed.String())
 
-	// Add decimal part if exists
-	if decimalPart != "" {
-		result.WriteString(",")
-		result.WriteString(decimalPart)
-	}
-
+	// Build final result
 	var result strings.Builder
 	result.WriteString(integerPart)
 
