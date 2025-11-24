@@ -37,6 +37,7 @@ func (cs *CallbackService) SendCallback(url string, payload interface{}, token *
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", "GuzzleHttp/7")
 
 	if token != nil && *token != "" {
 		req.Header.Set("X-CALLBACK-TOKEN", *token)
