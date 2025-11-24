@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kytapay/webhook-v2/helpers"
@@ -185,42 +186,11 @@ func (wc *WebhookController) HandleLinkQuEWallet(c *gin.Context) {
 }
 
 // HandlePakaiLinkVA handles webhook callback from PakaiLink for Virtual Account
+// Note: PakaiLink VA does not send X-SIGNATURE or X-TIMESTAMP headers
 func (wc *WebhookController) HandlePakaiLinkVA(c *gin.Context) {
-	// Validasi X-SIGNATURE
-	xSignature := c.GetHeader("X-SIGNATURE")
-	xTimestamp := c.GetHeader("X-TIMESTAMP")
-
-	if xSignature == "" || xTimestamp == "" {
-		wc.sendTelegramAlert("🚨 <b>Unauthorized Callback Attempt</b>\n\n⚠️ <b>Security Alert:</b>\n• Source: VA PakaiLink\n• IP Address: <code>" + c.ClientIP() + "</code>\n• Missing: X-SIGNATURE or X-TIMESTAMP", "HTML")
-		c.JSON(http.StatusOK, gin.H{
-			"responseCode":    "2002800",
-			"responseMessage": "Successful",
-		})
-		return
-	}
-
 	// Read request body
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"responseCode":    "2002800",
-			"responseMessage": "Successful",
-		})
-		return
-	}
-
-	// Verify signature
-	// Path should be the full callback URL (e.g., http://domain.com/payments/pakailink/va)
-	// Use RequestURI or construct from request
-	scheme := "http"
-	if c.Request.TLS != nil {
-		scheme = "https"
-	}
-	host := c.Request.Host
-	path := fmt.Sprintf("%s://%s%s", scheme, host, c.Request.URL.Path)
-	method := c.Request.Method
-	if !helpers.VerifyPakaiLinkSignature(method, path, string(body), xTimestamp, xSignature) {
-		wc.sendTelegramAlert("🚨 <b>Invalid Signature</b>\n\n⚠️ <b>Security Alert:</b>\n• Source: VA PakaiLink\n• IP Address: <code>" + c.ClientIP() + "</code>\n• Signature verification failed", "HTML")
 		c.JSON(http.StatusOK, gin.H{
 			"responseCode":    "2002800",
 			"responseMessage": "Successful",
@@ -268,8 +238,12 @@ func (wc *WebhookController) HandlePakaiLinkVA(c *gin.Context) {
 		status = "SUCCESS"
 	}
 
-	// Use X-TIMESTAMP as date
-	date := xTimestamp
+	// Use current time as date (PakaiLink VA doesn't send X-TIMESTAMP)
+	loc, err := time.LoadLocation("Asia/Jakarta")
+	if err != nil {
+		loc = time.UTC
+	}
+	date := time.Now().In(loc).Format("2006-01-02T15:04:05Z07:00")
 
 	if partnerRef == "" {
 		wc.sendTelegramAlert("⚠️ <b>Callback Error</b>\n\n• Source: VA PakaiLink\n• Issue: Missing payment ID", "HTML")
@@ -679,40 +653,11 @@ func (wc *WebhookController) HandleLinkQuPayoutEWallet(c *gin.Context) {
 }
 
 // HandlePakaiLinkPayoutBank handles webhook callback from PakaiLink for Bank Payout
+// Note: PakaiLink Payout does not send X-SIGNATURE or X-TIMESTAMP headers
 func (wc *WebhookController) HandlePakaiLinkPayoutBank(c *gin.Context) {
-	// Validasi X-SIGNATURE
-	xSignature := c.GetHeader("X-SIGNATURE")
-	xTimestamp := c.GetHeader("X-TIMESTAMP")
-
-	if xSignature == "" || xTimestamp == "" {
-		wc.sendTelegramAlert("🚨 <b>Unauthorized Callback Attempt</b>\n\n⚠️ <b>Security Alert:</b>\n• Source: Bank Payout PakaiLink\n• IP Address: <code>"+c.ClientIP()+"</code>\n• Missing: X-SIGNATURE or X-TIMESTAMP", "HTML")
-		c.JSON(http.StatusOK, gin.H{
-			"responseCode":    "2002800",
-			"responseMessage": "Successful",
-		})
-		return
-	}
-
 	// Read request body
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"responseCode":    "2002800",
-			"responseMessage": "Successful",
-		})
-		return
-	}
-
-	// Verify signature
-	scheme := "http"
-	if c.Request.TLS != nil {
-		scheme = "https"
-	}
-	host := c.Request.Host
-	path := fmt.Sprintf("%s://%s%s", scheme, host, c.Request.URL.Path)
-	method := c.Request.Method
-	if !helpers.VerifyPakaiLinkSignature(method, path, string(body), xTimestamp, xSignature) {
-		wc.sendTelegramAlert("🚨 <b>Invalid Signature</b>\n\n⚠️ <b>Security Alert:</b>\n• Source: Bank Payout PakaiLink\n• IP Address: <code>"+c.ClientIP()+"</code>\n• Signature verification failed", "HTML")
 		c.JSON(http.StatusOK, gin.H{
 			"responseCode":    "2002800",
 			"responseMessage": "Successful",
@@ -761,8 +706,12 @@ func (wc *WebhookController) HandlePakaiLinkPayoutBank(c *gin.Context) {
 		status = "FAILED"
 	}
 
-	// Use X-TIMESTAMP as date
-	date := xTimestamp
+	// Use current time as date (PakaiLink Payout doesn't send X-TIMESTAMP)
+	loc, err := time.LoadLocation("Asia/Jakarta")
+	if err != nil {
+		loc = time.UTC
+	}
+	date := time.Now().In(loc).Format("2006-01-02T15:04:05Z07:00")
 
 	if partnerRef == "" {
 		wc.sendTelegramAlert("⚠️ <b>Callback Error</b>\n\n• Source: Bank Payout PakaiLink\n• Issue: Missing payment ID", "HTML")
@@ -783,40 +732,11 @@ func (wc *WebhookController) HandlePakaiLinkPayoutBank(c *gin.Context) {
 }
 
 // HandlePakaiLinkPayoutEWallet handles webhook callback from PakaiLink for E-Wallet Payout
+// Note: PakaiLink Payout does not send X-SIGNATURE or X-TIMESTAMP headers
 func (wc *WebhookController) HandlePakaiLinkPayoutEWallet(c *gin.Context) {
-	// Validasi X-SIGNATURE
-	xSignature := c.GetHeader("X-SIGNATURE")
-	xTimestamp := c.GetHeader("X-TIMESTAMP")
-
-	if xSignature == "" || xTimestamp == "" {
-		wc.sendTelegramAlert("🚨 <b>Unauthorized Callback Attempt</b>\n\n⚠️ <b>Security Alert:</b>\n• Source: E-Wallet Payout PakaiLink\n• IP Address: <code>"+c.ClientIP()+"</code>\n• Missing: X-SIGNATURE or X-TIMESTAMP", "HTML")
-		c.JSON(http.StatusOK, gin.H{
-			"responseCode":    "2002800",
-			"responseMessage": "Successful",
-		})
-		return
-	}
-
 	// Read request body
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"responseCode":    "2002800",
-			"responseMessage": "Successful",
-		})
-		return
-	}
-
-	// Verify signature
-	scheme := "http"
-	if c.Request.TLS != nil {
-		scheme = "https"
-	}
-	host := c.Request.Host
-	path := fmt.Sprintf("%s://%s%s", scheme, host, c.Request.URL.Path)
-	method := c.Request.Method
-	if !helpers.VerifyPakaiLinkSignature(method, path, string(body), xTimestamp, xSignature) {
-		wc.sendTelegramAlert("🚨 <b>Invalid Signature</b>\n\n⚠️ <b>Security Alert:</b>\n• Source: E-Wallet Payout PakaiLink\n• IP Address: <code>"+c.ClientIP()+"</code>\n• Signature verification failed", "HTML")
 		c.JSON(http.StatusOK, gin.H{
 			"responseCode":    "2002800",
 			"responseMessage": "Successful",
@@ -865,8 +785,12 @@ func (wc *WebhookController) HandlePakaiLinkPayoutEWallet(c *gin.Context) {
 		status = "FAILED"
 	}
 
-	// Use X-TIMESTAMP as date
-	date := xTimestamp
+	// Use current time as date (PakaiLink Payout doesn't send X-TIMESTAMP)
+	loc, err := time.LoadLocation("Asia/Jakarta")
+	if err != nil {
+		loc = time.UTC
+	}
+	date := time.Now().In(loc).Format("2006-01-02T15:04:05Z07:00")
 
 	if partnerRef == "" {
 		wc.sendTelegramAlert("⚠️ <b>Callback Error</b>\n\n• Source: E-Wallet Payout PakaiLink\n• Issue: Missing payment ID", "HTML")
