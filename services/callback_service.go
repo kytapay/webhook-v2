@@ -91,7 +91,7 @@ func BuildPayloadV2(transaction *models.TransactionInfo, paymentID, merchantName
 				"payment_data": map[string]interface{}{
 					"bank_code":      transaction.BankEwalletName,
 					"account_number": transaction.BankNumber,
-					"account_name":   fmt.Sprintf("%s Kyta", merchantName),
+					"account_name":   fmt.Sprintf("%s", merchantName),
 				},
 				"merchant_url": map[string]interface{}{
 					"notify_url":  transaction.NotifyURL,
